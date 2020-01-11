@@ -2,18 +2,46 @@
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Application} app
  */
+const R = require('ramda')
 module.exports = app => {
-  // Your code here
-  app.log('Yay, the app was loaded!')
+  app.log('Base change reminder was loaded!')
 
-  app.on('issues.opened', async context => {
-    const issueComment = context.issue({ body: 'Thanks for opening this issue!' })
-    return context.github.issues.createComment(issueComment)
+  function getBasic (payload) {
+    const repo = payload.repository
+    const { owner } = repo
+    return { repo: repo.name, owner: owner.login }
+  }
+
+  function remind (octokit, basic, pr) {
+    const author = R.path(['user', 'login'], pr)
+    const comment = `Diverged with base branch, rebase to keep up-to-date. @${author}`
+    octokit.issues.createComment(R.mergeLeft(basic, { issue_number: pr.number, body: comment }))
+  }
+
+  app.on('push', async context => {
+    const push = context.payload
+    const basic = getBasic(push)
+    const base = R.replace(/refs\/heads\//g, '', push.ref)
+    if (R.not(R.test(/master|dev/, base))) {
+      return
+    }
+    app.log('Receiving push with base = %j', base)
+    const pulls = R.prop('data',
+      (await context.github.pulls.list(R.mergeLeft(basic, { state: 'open', base: base }))))
+    R.forEach(R.curry(remind)(context.github, basic), pulls)
   })
+  app.on('pull_request.opened', async context => {
+    const basic = getBasic(context.payload)
 
-  // For more information on building apps:
-  // https://probot.github.io/docs/
-
-  // To get your app running against GitHub, see:
-  // https://probot.github.io/docs/development/
+    const pr = R.prop('pull_request', context.payload)
+    const base = R.prop('base', pr)
+    // compare base branch head with parents of the 1st commit of PR
+    const commits = R.prop('data',
+      await context.github.pulls.listCommits(R.mergeLeft(basic, { pull_number: pr.number })))
+    const shas = R.map(R.prop('sha'), R.prop('parents', R.nth(0, commits)))
+    const isFastForward = R.includes(base.sha, shas)
+    if (!isFastForward) {
+      remind(context.github, basic, pr)
+    }
+  })
 }
