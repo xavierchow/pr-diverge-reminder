@@ -1,6 +1,18 @@
-# pr-base-reminder
+# pr-diverge-reminder
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that A probot App reminds you when the base branch changes
+
+# Usage 
+
+There are a few assumptions to use this bot,
+1. You use Github pull request in your workflow.
+2. You prefer linear git history when incorporating the feature branch 
+3. To accomplish step 2, you always use `git rebase` to update your pull request. 
+
+If you sometimes forget to update your pull request before merging, this bot is perfect reminder for you,
+it pings the author of the pull request when there are changes in the base branch, see the following snapshot:
+
+<img src="https://raw.githubusercontent.com/xavierchow/asset/master/pr-diverge-reminder/usage.png" width="650">
 
 ## Setup
 
