@@ -1,0 +1,10 @@
+{
+  "env": {
+    "APP_ID": "@prdiverge-app-id",
+    "PRIVATE_KEY": "@prdiverge-base64-encoded-private-key",
+    "WEBHOOK_SECRET": "@prdiverge-webhook-secret",
+    "DEBUG": "@prdiverge-debug",
+    "LOG_LEVEL": "@prdiverge-log-level"
+  },
+  "version": 2
+}

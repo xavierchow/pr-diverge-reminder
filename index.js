@@ -12,10 +12,10 @@ module.exports = app => {
     return { repo: repo.name, owner: owner.login }
   }
 
-  function remind (octokit, basic, pr) {
+  async function remind (octokit, basic, pr) {
     const author = R.path(['user', 'login'], pr)
     const comment = `Diverged with base branch, rebase to keep up-to-date. @${author}`
-    octokit.issues.createComment(R.mergeLeft(basic, { issue_number: pr.number, body: comment }))
+    return octokit.issues.createComment(R.mergeLeft(basic, { issue_number: pr.number, body: comment }))
   }
 
   app.on('push', async context => {
@@ -26,9 +26,13 @@ module.exports = app => {
       return
     }
     app.log('Receiving push with base = %j', base)
-    const pulls = R.prop('data',
-      (await context.github.pulls.list(R.mergeLeft(basic, { state: 'open', base: base }))))
-    R.forEach(R.curry(remind)(context.github, basic), pulls)
+    try {
+      const pulls = R.prop('data',
+        (await context.github.pulls.list(R.mergeLeft(basic, { state: 'open', base: base }))))
+      return await Promise.all(R.map(R.curry(remind)(context.github, basic), pulls))
+    } catch (e) {
+      app.log('Error when commenting = %j', e)
+    }
   })
   app.on('pull_request.opened', async context => {
     const basic = getBasic(context.payload)
