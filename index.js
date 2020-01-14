@@ -39,13 +39,16 @@ module.exports = app => {
 
     const pr = R.prop('pull_request', context.payload)
     const base = R.prop('base', pr)
+
+    app.log('Receiving pr.opened with base = %j', base.sha)
     // compare base branch head with parents of the 1st commit of PR
     const commits = R.prop('data',
       await context.github.pulls.listCommits(R.mergeLeft(basic, { pull_number: pr.number })))
     const shas = R.map(R.prop('sha'), R.prop('parents', R.nth(0, commits)))
+    app.log('parents sha = %j', shas)
     const isFastForward = R.includes(base.sha, shas)
     if (!isFastForward) {
-      remind(context.github, basic, pr)
+      await remind(context.github, basic, pr)
     }
   })
 }
