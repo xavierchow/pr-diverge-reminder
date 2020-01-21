@@ -30,6 +30,9 @@ If you have suggestions for how pr-base-reminder could be improved, or want to r
 
 For more, check out the [Contributing Guide](CONTRIBUTING.md).
 
+## Big Thanks
+[Xincen](https://github.com/chiyokei) to provide the icon for this bot.
+
 ## License
 
 [ISC](LICENSE) © 2020 Xavier Zhou <xiayezhou@gmail.com>
